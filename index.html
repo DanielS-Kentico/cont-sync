@@ -464,6 +464,7 @@ const pages = [
   { id: 2, name: "Coffee processing techniques", level: 1, parentId: 1,   status: "draft",      contentType: "Article page", channel: "Dancing Goat", workspace: "Workspace 1", hasInfo: true },
   { id: 3, name: "Coffee Beverages Explained",   level: 1, parentId: 1,   status: "published",  contentType: "Home page",    channel: "Dancing Goat", workspace: "Workspace 2" },
   { id: 4, name: "Donate with us",               level: 1, parentId: 1,   status: "published",  contentType: "Article page", channel: "Dancing Goat", workspace: "Workspace 1" },
+  { id: 9, name: "Contact form",                 level: 2, parentId: 4,   status: "published",  contentType: "Form",         channel: "Dancing Goat", workspace: "Workspace 1", tableOnly: true },
   { id: 5, name: "On roasts",                    level: 1, parentId: 1,   status: "published",  contentType: "Article page", channel: "Dancing Goat", workspace: "Workspace 1", hasMenu: true },
   { id: 6, name: "Roasted article",              level: 2, parentId: 5,   status: "draft",      contentType: "Article page", channel: "Dancing Goat", workspace: "Workspace 1", hasInfo: true },
   { id: 7, name: "Origins of Arabica Bourbon",   level: 1, parentId: 1,   status: "published",  contentType: "Article page", channel: "Dancing Goat", workspace: "Workspace 1" },
@@ -496,6 +497,8 @@ function renderTree() {
   list.innerHTML = '';
 
   pages.forEach(page => {
+    if (page.tableOnly) return; // form items only visible in advanced table view
+
     const indent = page.level * 20;
     const row = document.createElement('div');
     row.className = 'tree-item';
