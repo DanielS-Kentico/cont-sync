@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Sync Prototype</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #fce8f6;
+    display: block;
+    min-height: 100vh;
+    font-size: 14px;
+    color: #1a1a2e;
+  }
+
+  /* Modal */
+  .modal {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    width: 1020px;
+    max-width: calc(100vw - 80px);
+    margin: 40px auto;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 80px);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .modal-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111;
+  }
+
+  .btn-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    font-size: 20px;
+    line-height: 1;
+    padding: 4px;
+    border-radius: 4px;
+  }
+  .btn-close:hover { background: #f5f5f5; color: #333; }
+
+  /* Modal body */
+  .modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  /* Quick tip banner */
+  .quick-tip {
+    background: #f5f0fc;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .quick-tip-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #6b2fa0;
+  }
+  .quick-tip-body {
+    font-size: 13px;
+    color: #333;
+    line-height: 1.5;
+  }
+  .btn-enable-advanced {
+    align-self: flex-start;
+    background: none;
+    border: 1.5px solid #6b2fa0;
+    color: #6b2fa0;
+    border-radius: 20px;
+    padding: 6px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .btn-enable-advanced:hover { background: #f0e6fa; }
+
+  /* Info icon */
+  .icon-info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid #aaa;
+    color: #aaa;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: default;
+    flex-shrink: 0;
+  }
+
+  /* Include Forms row */
+  .include-forms-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    color: #333;
+  }
+
+  /* Section header */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  /* Custom checkbox */
+  .cb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border: 2px solid #bbb;
+    border-radius: 3px;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    background: #fff;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .cb:checked {
+    background: #6b2fa0;
+    border-color: #6b2fa0;
+  }
+  .cb:checked::after {
+    content: "";
+    position: absolute;
+    left: 3px; top: 0px;
+    width: 5px; height: 9px;
+    border: 2px solid #fff;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+  }
+  .cb:indeterminate {
+    background: #6b2fa0;
+    border-color: #6b2fa0;
+  }
+  .cb:indeterminate::after {
+    content: "";
+    position: absolute;
+    left: 2px; top: 5px;
+    width: 8px; height: 2px;
+    background: #fff;
+  }
+
+  /* ───── TREE VIEW ───── */
+  #treeView {}
+
+  .tree-list { display: flex; flex-direction: column; }
+
+  .tree-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 0;
+    min-height: 28px;
+    position: relative;
+  }
+
+  .tree-item-name {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  /* Status badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .badge-published {
+    color: #0a7c5c;
+  }
+  .badge-published::before {
+    content: "";
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #0a7c5c;
+    flex-shrink: 0;
+  }
+  .badge-draft {
+    color: #c06000;
+  }
+  .badge-draft::before {
+    content: "📄";
+    font-size: 11px;
+  }
+
+  /* Three-dots button */
+  .btn-menu {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .btn-menu:hover { background: #f0e8f8; color: #6b2fa0; }
+
+  /* Dropdown menu */
+  .dropdown-wrapper {
+    position: relative;
+    display: inline-flex;
+  }
+  .dropdown {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    z-index: 100;
+    min-width: 160px;
+    padding: 4px 0;
+    display: none;
+  }
+  .dropdown.open { display: block; }
+  .dropdown-left { left: auto; right: 0; }
+  .dropdown-item {
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #222;
+    white-space: nowrap;
+  }
+  .dropdown-item:hover { background: #f5f0fc; color: #6b2fa0; }
+
+  /* ───── TABLE VIEW ───── */
+  #tableView { display: none; }
+  #tableView.active { display: block; }
+
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid #eee;
+    border-radius: 6px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    table-layout: fixed;
+  }
+
+  thead tr {
+    background: #f8f5fc;
+    border-bottom: 2px solid #e8e0f0;
+  }
+
+  thead th {
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #444;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: #fdf8ff; }
+  tbody tr:last-child { border-bottom: none; }
+
+  tbody td {
+    padding: 9px 12px;
+    vertical-align: middle;
+    color: #222;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .td-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .linked-items {
+    color: #6b2fa0;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .linked-items:hover { text-decoration: underline; }
+
+  .td-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .action-icon {
+    color: #999;
+    font-size: 15px;
+    cursor: pointer;
+    padding: 2px;
+  }
+  .action-icon:hover { color: #6b2fa0; }
+
+  /* Modal footer */
+  .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  .btn-cancel {
+    background: none;
+    border: 1.5px solid #6b2fa0;
+    color: #6b2fa0;
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .btn-cancel:hover { background: #f5f0fc; }
+
+  .btn-sync {
+    background: #6b2fa0;
+    border: none;
+    color: #fff;
+    border-radius: 20px;
+    padding: 8px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .btn-sync:hover { background: #5a2588; }
+</style>
+</head>
+<body>
+
+<div class="modal">
+  <!-- Header -->
+  <div class="modal-header">
+    <h2>Content Sync</h2>
+    <button class="btn-close" title="Close">✕</button>
+  </div>
+
+  <!-- Body -->
+  <div class="modal-body">
+    <!-- Quick tip banner (shown only in tree view) -->
+    <div class="quick-tip" id="quickTip">
+      <div class="quick-tip-header">
+        <span class="icon-info" style="border-color:#6b2fa0;color:#6b2fa0;">i</span>
+        Quick tip
+      </div>
+      <div class="quick-tip-body">
+        When deselecting a parent while keeping its children items, make sure it is in the target instance. It's absence there might cause collapse of the whole synchronisation.<br>
+        Linked reusable content items, pages, assigned tags and their taxonomies, and parent folders will be synchronized together with selected pages.<br>
+        If you want to deselect linked items for synchronisation, go to the advanced view.
+      </div>
+      <button class="btn-enable-advanced" id="enableAdvancedBtn">Enable Advanced view</button>
+    </div>
+
+    <!-- ══════ TREE VIEW ══════ -->
+    <div id="treeView">
+      <div class="include-forms-row">
+        <input type="checkbox" class="cb" id="includeForms">
+        <label for="includeForms">Include Forms</label>
+        <span class="icon-info" title="Include form pages in sync">i</span>
+      </div>
+
+      <div class="section-header">
+        Select pages to sync
+        <div class="dropdown-wrapper" style="margin-left:4px;">
+          <button class="btn-menu" id="treeGlobalMenuBtn" title="More options">⋮</button>
+          <div class="dropdown dropdown-left" id="treeGlobalMenu">
+            <div class="dropdown-item" data-action="selectAll">Select all</div>
+            <div class="dropdown-item" data-action="deselectAll">Deselect all</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tree-list" id="treeList"></div>
+    </div>
+
+    <!-- ══════ TABLE VIEW ══════ -->
+    <div id="tableView" style="display:none;">
+      <div class="section-header" style="margin-bottom:12px;">Select Items to sync</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:240px">
+                <div class="td-name">Name</div>
+              </th>
+              <th style="width:120px">Linked Items</th>
+              <th style="width:160px">Status</th>
+              <th style="width:120px">Content type</th>
+              <th style="width:120px">Channel</th>
+              <th style="width:120px">Workspaces</th>
+              <th style="width:80px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="modal-footer">
+    <button class="btn-cancel">Cancel Sync</button>
+    <button class="btn-sync">Sync</button>
+  </div>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+const pages = [
+  { id: 1, name: "Articles",                    level: 0, parentId: null, status: "published", contentType: "Article page", channel: "Dancing Goat", workspace: "Workspace 1", hasMenu: true },
+  { id: 2, name: "Coffee processing techniques", level: 1, parentId: 1,   status: "draft",      contentType: "Article page", channel: "Dancing Goat", workspace: "Workspace 1", hasInfo: true },
+  { id: 3, name: "Coffee Beverages Explained",   level: 1, parentId: 1,   status: "published",  contentType: "Home page",    channel: "Dancing Goat", workspace: "Workspace 2" },
+  { id: 4, name: "Donate with us",               level: 1, parentId: 1,   status: "published",  contentType: "Article page", channel: "Dancing Goat", workspace: "Workspace 1" },
+  { id: 9, name: "Contact form",                 level: 2, parentId: 4,   status: "published",  contentType: "Form",         channel: "Dancing Goat", workspace: "Workspace 1", tableOnly: true },
+  { id: 5, name: "On roasts",                    level: 1, parentId: 1,   status: "published",  contentType: "Article page", channel: "Dancing Goat", workspace: "Workspace 1", hasMenu: true },
+  { id: 6, name: "Roasted article",              level: 2, parentId: 5,   status: "draft",      contentType: "Article page", channel: "Dancing Goat", workspace: "Workspace 1", hasInfo: true },
+  { id: 7, name: "Origins of Arabica Bourbon",   level: 1, parentId: 1,   status: "published",  contentType: "Article page", channel: "Dancing Goat", workspace: "Workspace 1" },
+  { id: 8, name: "Which brewing fits you?",      level: 1, parentId: 1,   status: "published",  contentType: "Article page", channel: "Dancing Goat", workspace: "Workspace 1" },
+];
+
+// Shared checked state: { [id]: boolean }
+const checked = {};
+pages.forEach(p => checked[p.id] = false);
+
+// Collapsed state for parents in table view: { [id]: boolean }
+const collapsed = {};
+
+// Child counts per parent
+function childCount(parentId) {
+  return pages.filter(p => p.parentId === parentId).length;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function statusBadge(status) {
+  if (status === 'published') {
+    return `<span class="badge badge-published">Published</span>`;
+  }
+  return `<span class="badge badge-draft">Draft (New version)</span>`;
+}
+
+// ── Tree View ─────────────────────────────────────────────────────────────────
+function renderTree() {
+  const list = document.getElementById('treeList');
+  list.innerHTML = '';
+
+  pages.forEach(page => {
+    if (page.tableOnly) return; // form items only visible in advanced table view
+
+    const indent = page.level * 20;
+    const row = document.createElement('div');
+    row.className = 'tree-item';
+    row.style.paddingLeft = indent + 'px';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'cb';
+    cb.checked = checked[page.id];
+    cb.addEventListener('change', () => {
+      checked[page.id] = cb.checked;
+      // Does NOT affect children — independent checkboxes
+    });
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'tree-item-name';
+    nameSpan.textContent = page.name;
+
+    const badgeEl = document.createElement('span');
+    badgeEl.innerHTML = statusBadge(page.status);
+
+    row.appendChild(cb);
+    row.appendChild(nameSpan);
+    row.appendChild(badgeEl);
+
+    // Info icon
+    if (page.hasInfo) {
+      const info = document.createElement('span');
+      info.className = 'icon-info';
+      info.title = 'This page has a newer draft version';
+      info.textContent = 'i';
+      row.appendChild(info);
+    }
+
+    // Three-dots menu (per item — for items with hasMenu)
+    if (page.hasMenu) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'dropdown-wrapper';
+
+      const btn = document.createElement('button');
+      btn.className = 'btn-menu';
+      btn.textContent = '⋮';
+      btn.title = 'Options';
+
+      const menu = document.createElement('div');
+      menu.className = 'dropdown dropdown-left';
+
+      const children = pages.filter(p => p.parentId === page.id);
+
+      const allChildrenChecked = children.every(c => checked[c.id]);
+      const label = allChildrenChecked ? 'Deselect children' : 'Select children';
+      [label].forEach(label => {
+        const item = document.createElement('div');
+        item.className = 'dropdown-item';
+        item.textContent = label;
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const val = label === 'Select children';
+          children.forEach(child => {
+            checked[child.id] = val;
+            // Also affect grandchildren
+            pages.filter(p => p.parentId === child.id).forEach(gc => {
+              checked[gc.id] = val;
+            });
+          });
+          menu.classList.remove('open');
+          renderTree();
+          renderTable();
+          updateTableSelectAll();
+        });
+        menu.appendChild(item);
+      });
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllDropdowns();
+        menu.classList.toggle('open');
+      });
+
+      wrapper.appendChild(btn);
+      wrapper.appendChild(menu);
+      row.appendChild(wrapper);
+    }
+
+    list.appendChild(row);
+  });
+}
+
+// ── Table View ────────────────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  pages.forEach(page => {
+    const indent = page.level * 24;
+    const tr = document.createElement('tr');
+
+    // Hide this row if any ancestor is collapsed
+    const isHidden = (function() {
+      let p = page;
+      while (p.parentId !== null) {
+        if (collapsed[p.parentId]) return true;
+        p = pages.find(x => x.id === p.parentId);
+      }
+      return false;
+    })();
+    if (isHidden) tr.style.display = 'none';
+
+    // Name cell — spacer + checkbox + name together, indented as a unit
+    const tdName = document.createElement('td');
+    tdName.style.paddingLeft = '0';
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'td-name';
+    // Explicit spacer so the whole group (checkbox + name) shifts right together
+    const spacer = document.createElement('span');
+    spacer.style.display = 'inline-block';
+    spacer.style.width = (12 + indent) + 'px';
+    spacer.style.flexShrink = '0';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'cb';
+    cb.checked = checked[page.id];
+    cb.addEventListener('change', () => {
+      checked[page.id] = cb.checked;
+      updateTableSelectAll();
+    });
+    const nameText = document.createElement('span');
+    nameText.textContent = page.name;
+    nameDiv.appendChild(spacer);
+    nameDiv.appendChild(cb);
+    nameDiv.appendChild(nameText);
+    tdName.appendChild(nameDiv);
+    tr.appendChild(tdName);
+
+    // Linked items
+    const tdLinked = document.createElement('td');
+    const count = childCount(page.id);
+    if (count > 0) {
+      const span = document.createElement('span');
+      span.className = 'linked-items';
+      span.style.cursor = 'pointer';
+      span.style.userSelect = 'none';
+      const arrow = collapsed[page.id] ? '↓' : '↑';
+      span.textContent = `${arrow} ${count} item${count !== 1 ? 's' : ''}`;
+      span.title = collapsed[page.id] ? 'Expand children' : 'Collapse children';
+      span.addEventListener('click', () => {
+        collapsed[page.id] = !collapsed[page.id];
+        renderTable();
+      });
+      tdLinked.appendChild(span);
+    } else {
+      tdLinked.textContent = '–';
+      tdLinked.style.color = '#bbb';
+    }
+    tr.appendChild(tdLinked);
+
+    // Status
+    const tdStatus = document.createElement('td');
+    tdStatus.innerHTML = statusBadge(page.status);
+    tr.appendChild(tdStatus);
+
+    // Content type
+    const tdType = document.createElement('td');
+    tdType.textContent = page.contentType;
+    tr.appendChild(tdType);
+
+    // Channel
+    const tdChannel = document.createElement('td');
+    tdChannel.textContent = page.channel;
+    tr.appendChild(tdChannel);
+
+    // Workspaces
+    const tdWs = document.createElement('td');
+    tdWs.textContent = page.workspace;
+    tr.appendChild(tdWs);
+
+    // Actions
+    const tdActions = document.createElement('td');
+    tdActions.className = 'td-actions';
+    const children = pages.filter(p => p.parentId === page.id);
+    if (children.length > 0) {
+      const iconChildren = document.createElement('span');
+      iconChildren.className = 'action-icon';
+      const allChildrenChecked = () => children.every(c => checked[c.id]);
+      iconChildren.title = allChildrenChecked() ? 'Deselect children' : 'Select children';
+      iconChildren.textContent = '☑';
+      iconChildren.style.cursor = 'pointer';
+      iconChildren.addEventListener('click', () => {
+        const val = !allChildrenChecked();
+        children.forEach(c => {
+          checked[c.id] = val;
+          pages.filter(p => p.parentId === c.id).forEach(gc => { checked[gc.id] = val; });
+        });
+        renderTable();
+      });
+      tdActions.appendChild(iconChildren);
+    }
+    const iconExt = document.createElement('span');
+    iconExt.className = 'action-icon';
+    iconExt.title = 'Open in new tab';
+    iconExt.textContent = '↗';
+    tdActions.appendChild(iconExt);
+    tr.appendChild(tdActions);
+
+    tbody.appendChild(tr);
+  });
+
+  updateTableSelectAll();
+}
+
+function updateTableSelectAll() {
+  // no-op: header select-all checkbox removed
+}
+
+// ── Global tree select all ────────────────────────────────────────────────────
+document.getElementById('treeGlobalMenuBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  closeAllDropdowns();
+  document.getElementById('treeGlobalMenu').classList.toggle('open');
+});
+
+document.getElementById('treeGlobalMenu').querySelectorAll('.dropdown-item').forEach(item => {
+  item.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const action = item.dataset.action;
+    const val = action === 'selectAll';
+    pages.forEach(p => checked[p.id] = val);
+    document.getElementById('treeGlobalMenu').classList.remove('open');
+    renderTree();
+    renderTable();
+    updateTableSelectAll();
+  });
+});
+
+
+// ── Enable Advanced view (one-way) ───────────────────────────────────────────
+document.getElementById('enableAdvancedBtn').addEventListener('click', function() {
+  document.getElementById('quickTip').style.display = 'none';
+  document.getElementById('treeView').style.display = 'none';
+  document.getElementById('tableView').style.display = 'block';
+  renderTable();
+});
+
+// ── Close dropdowns when clicking outside ────────────────────────────────────
+function closeAllDropdowns() {
+  document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
+}
+document.addEventListener('click', closeAllDropdowns);
+
+// ── Include Forms toggle ──────────────────────────────────────────────────────
+document.getElementById('includeForms').addEventListener('change', function() {
+  const formItems = pages.filter(p => p.contentType === 'Form');
+  formItems.forEach(p => checked[p.id] = this.checked);
+  renderTree();
+  renderTable();
+  updateTableSelectAll();
+});
+
+// ── Initial render ────────────────────────────────────────────────────────────
+renderTree();
+renderTable(); // pre-render so it's ready when switching
+</script>
+</body>
+</html>
