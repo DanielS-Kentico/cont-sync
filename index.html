@@ -387,8 +387,8 @@
     display: none;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding-top: 15%;
+    justify-content: center;
+    margin-top: -10%;
     flex: 1;
     gap: 16px;
   }
@@ -831,12 +831,14 @@ function showSuccess() {
   document.getElementById('treeView').style.display = 'none';
   document.getElementById('tableView').style.display = 'none';
   document.getElementById('modalFooter').style.display = 'none';
+  document.querySelector('.toggle-row').style.display = 'none';
   document.getElementById('successScreen').style.display = 'flex';
 }
 document.querySelector('.btn-sync').addEventListener('click', showSuccess);
 document.getElementById('resetFromSuccess').addEventListener('click', function() {
   document.getElementById('successScreen').style.display = 'none';
   document.getElementById('modalFooter').style.display = 'flex';
+  document.querySelector('.toggle-row').style.display = 'flex';
   resetToDefault();
 });
 
