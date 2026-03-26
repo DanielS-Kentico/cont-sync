@@ -413,6 +413,40 @@
     text-transform: uppercase;
   }
   .btn-sync:hover { background: #5a2588; }
+
+  /* Success screen */
+  .success-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 16px;
+  }
+  .success-tick {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: #6b2fa0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .success-tick svg { width: 32px; height: 32px; }
+  .success-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111;
+  }
+  .btn-reset-link {
+    background: none;
+    border: none;
+    color: #6b2fa0;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+  }
+  .btn-reset-link:hover { color: #4a1f70; }
 </style>
 </head>
 <body>
@@ -489,8 +523,19 @@
     <button class="bottom-alert-close" id="bottomAlertClose">✕</button>
   </div>
 
+  <!-- Success screen -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-tick">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="6,17 13,24 26,9" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="success-title">Sync successful</div>
+    <button class="btn-reset-link" id="resetFromSuccess">Reset to default</button>
+  </div>
+
   <!-- Footer -->
-  <div class="modal-footer">
+  <div class="modal-footer" id="modalFooter">
     <button class="btn-cancel">Cancel Sync</button>
     <button class="btn-open-advanced" id="openAdvancedBtn">Open Advanced View</button>
     <button class="btn-sync">Sync</button>
@@ -824,6 +869,22 @@ function resetToDefault() {
 }
 document.querySelector('.btn-cancel').addEventListener('click', resetToDefault);
 document.querySelector('.btn-close').addEventListener('click', resetToDefault);
+
+// ── Success screen ────────────────────────────────────────────────────────────
+function showSuccess() {
+  document.getElementById('treeView').style.display = 'none';
+  document.getElementById('tableView').style.display = 'none';
+  document.getElementById('friendlyWarning').style.display = 'none';
+  document.getElementById('bottomAlert').style.display = 'none';
+  document.getElementById('modalFooter').style.display = 'none';
+  document.getElementById('successScreen').style.display = 'flex';
+}
+document.querySelector('.btn-sync').addEventListener('click', showSuccess);
+document.getElementById('resetFromSuccess').addEventListener('click', function() {
+  document.getElementById('successScreen').style.display = 'none';
+  document.getElementById('modalFooter').style.display = 'flex';
+  resetToDefault();
+});
 
 // ── Initial render ────────────────────────────────────────────────────────────
 renderTree();
