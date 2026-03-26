@@ -473,7 +473,7 @@ const pages = [
 
 // Shared checked state: { [id]: boolean }
 const checked = {};
-pages.forEach(p => checked[p.id] = false);
+pages.forEach(p => checked[p.id] = p.contentType !== 'Form');
 
 // Collapsed state for parents in table view: { [id]: boolean }
 const collapsed = {};
@@ -548,7 +548,9 @@ function renderTree() {
 
       const children = pages.filter(p => p.parentId === page.id);
 
-      ['Select children', 'Deselect children'].forEach(label => {
+      const allChildrenChecked = children.every(c => checked[c.id]);
+      const label = allChildrenChecked ? 'Deselect children' : 'Select children';
+      [label].forEach(label => {
         const item = document.createElement('div');
         item.className = 'dropdown-item';
         item.textContent = label;
@@ -750,6 +752,33 @@ function closeAllDropdowns() {
   document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
 }
 document.addEventListener('click', closeAllDropdowns);
+
+// ── Include Forms toggle ──────────────────────────────────────────────────────
+document.getElementById('includeForms').addEventListener('change', function() {
+  const formItems = pages.filter(p => p.contentType === 'Form');
+  formItems.forEach(p => checked[p.id] = this.checked);
+  renderTree();
+  renderTable();
+  updateTableSelectAll();
+});
+
+// ── Reset to default state ────────────────────────────────────────────────────
+function resetToDefault() {
+  // Check all non-form pages, uncheck form pages
+  pages.forEach(p => checked[p.id] = p.contentType !== 'Form');
+  // Uncheck Include Forms
+  document.getElementById('includeForms').checked = false;
+  // Switch back to tree view
+  document.getElementById('tableView').style.display = 'none';
+  document.getElementById('treeView').style.display = 'block';
+  document.getElementById('advancedToggle').checked = false;
+  closeAllDropdowns();
+  renderTree();
+  renderTable();
+  updateTableSelectAll();
+}
+document.querySelector('.btn-cancel').addEventListener('click', resetToDefault);
+document.querySelector('.btn-close').addEventListener('click', resetToDefault);
 
 // ── Initial render ────────────────────────────────────────────────────────────
 renderTree();

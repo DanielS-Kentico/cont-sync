@@ -471,7 +471,7 @@ const pages = [
 
 // Shared checked state: { [id]: boolean }
 const checked = {};
-pages.forEach(p => checked[p.id] = false);
+pages.forEach(p => checked[p.id] = p.contentType !== 'Form');
 
 // Collapsed state for parents in table view: { [id]: boolean }
 const collapsed = {};
@@ -754,6 +754,24 @@ document.getElementById('includeForms').addEventListener('change', function() {
   renderTable();
   updateTableSelectAll();
 });
+
+// ── Reset to default state ────────────────────────────────────────────────────
+function resetToDefault() {
+  // Check all non-form pages, uncheck form pages
+  pages.forEach(p => checked[p.id] = p.contentType !== 'Form');
+  // Uncheck Include Forms
+  document.getElementById('includeForms').checked = false;
+  // Switch back to tree view and restore the quick tip banner
+  document.getElementById('tableView').style.display = 'none';
+  document.getElementById('treeView').style.display = 'block';
+  document.getElementById('quickTip').style.display = 'flex';
+  closeAllDropdowns();
+  renderTree();
+  renderTable();
+  updateTableSelectAll();
+}
+document.querySelector('.btn-cancel').addEventListener('click', resetToDefault);
+document.querySelector('.btn-close').addEventListener('click', resetToDefault);
 
 // ── Initial render ────────────────────────────────────────────────────────────
 renderTree();
